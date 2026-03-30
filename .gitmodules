@@ -1,0 +1,4 @@
+[submodule ".devcontainer"]
+	path = .devcontainer
+	url = ssh://git@gitlab.yumez.synology.me:2224/yumeza/devcontainer.git
+	branch = python_dev
