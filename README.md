@@ -5,3 +5,4 @@
 | サブパッケージ | 説明 | 詳細 |
 |---|---|---|
 | `bgrun` | バックグラウンドプロセス実行・ゾンビ検知・リトライ・ログ転送 | [docs/bgrun.md](docs/bgrun.md) |
+| `log` | root logger へのハンドラー・フォーマット一括設定 | [docs/log.md](docs/log.md) |
