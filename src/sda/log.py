@@ -27,9 +27,12 @@ _JST = ZoneInfo("Asia/Tokyo")
 FmtName = Literal["default", "simple", "detailed"]
 
 _FORMATS: dict[FmtName, str] = {
-    "default": "%(asctime)s.%(msecs)03d [%(levelname)s] %(name)s: %(message)s",
+    "default": "%(asctime)s.%(msecs)03d [%(levelname)s] PID:%(process)d %(name)s: %(message)s",
     "simple": "[%(levelname)s] %(message)s",
-    "detailed": "%(asctime)s.%(msecs)03d [%(levelname)s] %(name)s (%(filename)s:%(lineno)d): %(message)s",
+    "detailed": (
+        "%(asctime)s.%(msecs)03d [%(levelname)s] PID:%(process)d Thread:%(threadName)s"
+        " %(name)s (%(filename)s:%(lineno)d): %(message)s"
+    ),
 }
 
 _DATEFMT = "%Y-%m-%d %H:%M:%S"

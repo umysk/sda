@@ -73,9 +73,9 @@ root_logger (DEBUG)  ← min("WARNING", "DEBUG") に自動設定
 
 | 名前 | 出力例 |
 |------|--------|
-| `"default"` | `2026-04-05 12:00:00.123 [INFO] myapp: メッセージ` |
+| `"default"` | `2026-04-05 12:00:00.123 [INFO] PID:1234 myapp: メッセージ` |
 | `"simple"` | `[INFO] メッセージ` |
-| `"detailed"` | `2026-04-05 12:00:00.123 [INFO] myapp (log_example.py:42): メッセージ` |
+| `"detailed"` | `2026-04-05 12:00:00.123 [INFO] PID:1234 Thread:MainThread myapp (log_example.py:42): メッセージ` |
 
 
 ## 使用パターン
@@ -181,3 +181,47 @@ uv run python examples/log_example.py both      # シナリオ4: コンソール
 uv run python examples/log_example.py fmt       # シナリオ5: フォーマットプリセット比較
 uv run python examples/log_example.py all       # 全シナリオ
 ```
+
+
+## 付録: logging モジュール パラメータ参考
+
+> 保守時の参考用。全一覧: https://docs.python.org/3/library/logging.html#logrecord-attributes
+
+### ログレベル
+
+| 定数 | 数値 | 用途 |
+|---|---|---|
+| `logging.DEBUG` | 10 | 詳細なデバッグ情報 |
+| `logging.INFO` | 20 | 一般的な情報 |
+| `logging.WARNING` | 30 | 警告メッセージ |
+| `logging.ERROR` | 40 | エラーメッセージ |
+| `logging.CRITICAL` | 50 | 致命的なエラー |
+
+### フォーマット指定子
+
+| 指定子 | 型 | 内容 |
+|---|---|---|
+| `%(asctime)s` | str | タイムスタンプ（`datefmt` で書式指定） |
+| `%(msecs)d` | int | ミリ秒 |
+| `%(name)s` | str | ロガー名 |
+| `%(levelname)s` | str | ログレベル名（DEBUG / INFO など） |
+| `%(levelno)d` | int | ログレベル番号 |
+| `%(message)s` | str | ログメッセージ |
+| `%(filename)s` | str | ファイル名 |
+| `%(pathname)s` | str | ファイルのフルパス（`__file__` と同じ値） |
+| `%(module)s` | str | モジュール名 |
+| `%(funcName)s` | str | 関数名 |
+| `%(lineno)d` | int | 行番号 |
+| `%(created)f` | float | 作成時刻（Unix タイムスタンプ） |
+| `%(thread)d` | int | スレッド ID |
+| `%(threadName)s` | str | スレッド名 |
+| `%(process)d` | int | プロセス ID (PID) |
+
+### ハンドラー
+
+| クラス | 出力先 |
+|---|---|
+| `StreamHandler` | コンソール（stderr など） |
+| `FileHandler` | ファイル |
+| `RotatingFileHandler` | ファイル（サイズでローテーション） |
+| `TimedRotatingFileHandler` | ファイル（時間でローテーション） |
