@@ -39,15 +39,19 @@ _DATEFMT = "%Y-%m-%d %H:%M:%S"
 _DEFAULT_FILE_NAME = Path("logs/app.log")
 
 
+_logger: logging.Logger = logging.getLogger(__name__)
+
+
 def setup(
     fmt: FmtName = "default",
     console_level: str | int | None = "INFO",
     file_level: str | int | None = None,
     file_name: str | Path = _DEFAULT_FILE_NAME,
+    *,
+    force: bool = False,
 ) -> None:
     """Root logger にハンドラーとフォーマットを設定する。
 
-    複数回呼び出した場合は既存のハンドラーを破棄して上書きする。
     root logger のレベルは有効なハンドラーレベルの最小値に自動設定される。
 
     Parameters
@@ -67,6 +71,9 @@ def setup(
         存在しない親ディレクトリは自動作成される。
         デフォルトは "logs/app.log"。
         例: "logs/app.log" → "logs/20260405123912_app.log"
+    force : bool, optional
+        True のとき、既存のハンドラーを閉じて上書きする。
+        False のとき、すでに設定済みであれば何もしない。デフォルトは False。
 
     Raises
     ------
@@ -91,7 +98,17 @@ def setup(
     formatter = logging.Formatter(_FORMATS[fmt], datefmt=_DATEFMT)
 
     root_logger: logging.Logger = logging.getLogger()
-    root_logger.handlers.clear()
+
+    if root_logger.handlers:
+        if not force:
+            _logger.warning(
+                "setup() はすでに設定済みのため無視されました。上書きするには force=True を指定してください。"
+            )
+            return
+        _logger.info("setup() が force=True で呼ばれました。既存のハンドラーを閉じて上書きします。")
+        for h in root_logger.handlers[:]:
+            h.close()
+        root_logger.handlers.clear()
 
     # コンソールハンドラー
     if console_level is not None:

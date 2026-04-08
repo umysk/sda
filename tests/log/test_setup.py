@@ -18,6 +18,8 @@ def reset_root_logger() -> Generator[None]:
     """各テスト後に root logger をリセットする。"""
     yield
     root_logger: logging.Logger = logging.getLogger()
+    for h in root_logger.handlers[:]:
+        h.close()
     root_logger.handlers.clear()
     root_logger.setLevel(logging.WARNING)
 
@@ -169,13 +171,49 @@ class TestSetupFmt:
         sda.log.setup(fmt=fmt, console_level="INFO")
 
 
-class TestSetupOverwrite:
-    """複数回呼び出しのテスト。"""
+class TestSetupForce:
+    """force パラメータのテスト。"""
 
     @staticmethod
-    def test_second_call_clears_previous_handlers() -> None:
-        """2回目の呼び出しで既存ハンドラーが破棄される。"""
+    def test_second_call_without_force_is_ignored() -> None:
+        """force=False のとき、2回目の呼び出しは無視される。"""
         sda.log.setup(console_level="DEBUG", file_level=None)
-        sda.log.setup(console_level="INFO", file_level=None)
+        sda.log.setup(console_level="INFO", file_level=None)  # force=False (デフォルト)
+        assert len(logging.getLogger().handlers) == 1
+        assert logging.getLogger().handlers[0].level == logging.DEBUG  # 最初の設定が維持される
+
+    @staticmethod
+    def test_second_call_without_force_logs_warning(caplog: pytest.LogCaptureFixture) -> None:
+        """force=False のとき、スキップされたことを WARNING ログに出力する。"""
+        sda.log.setup(console_level="DEBUG", file_level=None)
+        with caplog.at_level(logging.WARNING, logger="sda.log"):
+            sda.log.setup(console_level="INFO", file_level=None)
+        assert "force=True" in caplog.text
+
+    @staticmethod
+    def test_second_call_with_force_overwrites() -> None:
+        """force=True のとき、既存ハンドラーを閉じて上書きする。"""
+        sda.log.setup(console_level="DEBUG", file_level=None)
+        sda.log.setup(console_level="INFO", file_level=None, force=True)
         assert len(logging.getLogger().handlers) == 1
         assert logging.getLogger().handlers[0].level == logging.INFO
+
+    @staticmethod
+    def test_force_closes_file_handler(tmp_path: Path) -> None:
+        """force=True のとき、既存の FileHandler が閉じられる (FD リークなし)。"""
+        sda.log.setup(console_level=None, file_level="DEBUG", file_name=tmp_path / "app.log")
+        old_handler = logging.getLogger().handlers[0]
+        assert isinstance(old_handler, logging.FileHandler)
+
+        sda.log.setup(console_level="INFO", file_level=None, force=True)
+
+        # 旧ハンドラーのストリームが閉じられている
+        assert old_handler.stream.closed
+
+    @staticmethod
+    def test_force_logs_info_on_overwrite(caplog: pytest.LogCaptureFixture) -> None:
+        """force=True のとき、上書きすることを INFO ログに出力する。"""
+        sda.log.setup(console_level="DEBUG", file_level=None)
+        with caplog.at_level(logging.INFO, logger="sda.log"):
+            sda.log.setup(console_level="INFO", file_level=None, force=True)
+        assert "force=True" in caplog.text

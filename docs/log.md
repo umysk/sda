@@ -24,10 +24,11 @@ logger.info("起動しました")
 
 ```python
 sda.log.setup(
-    fmt="default",          # フォーマットプリセット
-    console_level="INFO",   # コンソール出力レベル (None = コンソール出力なし)
-    file_level=None,        # ファイル出力レベル   (None = ファイル出力なし)
+    fmt="default",             # フォーマットプリセット
+    console_level="INFO",      # コンソール出力レベル (None = コンソール出力なし)
+    file_level=None,           # ファイル出力レベル   (None = ファイル出力なし)
     file_name="logs/app.log",  # file_level が None でなければ使用
+    force=False,               # True のとき既存ハンドラーを閉じて上書き
 )
 ```
 
@@ -39,6 +40,7 @@ sda.log.setup(
 | `console_level` | `str \| int \| None` | `"INFO"` | コンソール (stderr) ハンドラーのログレベル。`None` のときコンソールへ出力しない。 |
 | `file_level` | `str \| int \| None` | `None` | ファイルハンドラーのログレベル。`None` のときファイルへ出力しない。 |
 | `file_name` | `str \| Path` | `"logs/app.log"` | ログファイルのパス。`file_level` が `None` のときは無視される。ファイル名の先頭にタイムスタンプ (JST) を付加する。存在しない親ディレクトリは自動作成される。 |
+| `force` | `bool` | `False` | `True` のとき既存ハンドラーを閉じて上書きする。`False` のとき設定済みであれば WARNING を出してスキップ。 |
 
 #### root logger レベルの自動設定
 
@@ -63,7 +65,22 @@ root_logger (DEBUG)  ← min("WARNING", "DEBUG") に自動設定
 
 #### 複数回呼び出し
 
-`setup()` を複数回呼び出した場合、既存のハンドラーを破棄して上書きする。
+`force=False`（デフォルト）のとき、すでにハンドラーが設定済みであれば何もしない。
+スキップされた旨を `WARNING` レベルでログ出力する。
+
+`force=True` のとき、既存のハンドラーを確実に閉じてから（FD リークなし）新たに設定し直す。
+上書きした旨を `INFO` レベルでログ出力する。
+
+```python
+# 初回: 通常どおり設定される
+sda.log.setup(console_level="INFO")
+
+# 2回目: force=False → WARNING を出してスキップ
+sda.log.setup(console_level="DEBUG")
+
+# 3回目: force=True → 既存ハンドラーを閉じて上書き
+sda.log.setup(console_level="DEBUG", force=True)
+```
 
 #### 両方 None のとき
 
@@ -179,6 +196,7 @@ uv run python examples/log_example.py filtered  # シナリオ2: コンソール
 uv run python examples/log_example.py file      # シナリオ3: ファイルのみ
 uv run python examples/log_example.py both      # シナリオ4: コンソール + ファイル
 uv run python examples/log_example.py fmt       # シナリオ5: フォーマットプリセット比較
+uv run python examples/log_example.py force     # シナリオ6: force パラメータの動作確認
 uv run python examples/log_example.py all       # 全シナリオ
 ```
 
